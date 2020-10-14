@@ -23,7 +23,7 @@ async function recordOp(client, op, dbname, collection) {
 }
 
 async function killOp(client, op) {
-    record = await recordOp(client, op, cfg.longOpsDB, cfg.killedOpsCollection);
+    let record = await recordOp(client, op, cfg.longOpsDB, cfg.killedOpsCollection);
     if (record) { // kill operation only if it has been successfully recorded
         try {
             await client.db().admin().command({ killOp: 1, op: op.opid });
@@ -34,11 +34,13 @@ async function killOp(client, op) {
     }
 }
 
-async function mainLoop(cfg) {
-    const client = new MongoClient(cfg.mongoURI, { useUnifiedTopology: true });
-    await client.connect();
+async function mainLoop(cfg, client) {
     while (true) {
+        if (sigTerm) {
+            return Promise.resolve();
+        }
         let promises = [];
+        console.log("Checking for long running operations...");
         let ops = await getLongRunningOps(client, cfg.thresholdSeconds);
         if (ops.length !== 0) {
             _.forEach(ops, async (op) => {
@@ -57,25 +59,49 @@ async function mainLoop(cfg) {
                 }
             });
         }
-        let timeout = new Promise(resolve => setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
-        
-        // wait for all the pending queries before starting the next iteration
-        await Promise.all(promises); 
 
         if (sigTerm) {
-            console.log("Handling the received SIGTERM signal...");
-            await client.close();
-            console.log("Successfully handled the SIGTERM signal and exited gracefully...");
-            process.exit(0);
+            return Promise.resolve();
         }
+
+        let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
+        
+        // wait for all the pending queries before starting the next iteration
+        await Promise.all(promises);
 
         await timeout;
     }
 }
 
-var sigTerm;
-process.on('SIGTERM', function () {
+async function handleSigTerm(client, semaphore) {
+    console.log("Handling the received SIGTERM signal...");
     sigTerm = true;
-});
+    if (!_.get(timer, '_destroyed', true)) {
+        clearTimeout(timer);
+    } else {
+        await semaphore;
+    }
 
-mainLoop(cfg);
+    await client.close();
+    console.log("Successfully handled the SIGTERM signal and exited gracefully...");
+    process.exit(0);
+}
+
+async function main() {
+    const client = new MongoClient(cfg.mongoURI, { useUnifiedTopology: true });
+    console.log("Connecting to the database...");
+    await client.connect();
+    console.log("Successfully connected, starting the main loop...");
+
+    const loopFinished = mainLoop(cfg, client);
+
+    process.on('SIGTERM', async ()=> {
+       await handleSigTerm(client, loopFinished)
+    });
+}
+
+// global vars for handling the sigterm properly
+var sigTerm;
+var timer;
+
+main();
