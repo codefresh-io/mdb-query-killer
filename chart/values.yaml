@@ -1,0 +1,18 @@
+affinity: {}
+
+image:
+  registry: gcr.io/codefresh-inc
+  name: codefresh/mdb-query-terminator
+
+# dockerConfigB64: 
+
+config:
+  mongoURI: 'mongodb://root:password@mongodb:27017/admin?ssl=false'
+  thresholdSeconds: 60
+  checkIntervalSeconds: 15
+  killFilter: '{ \"op\": \"query\" }'
+  recordAllLongOps: true
+  longOpsDB: "long-queries"
+  longOpsCollection: "long-queries"
+  killedOpsCollection: "killed-queries"
+  killingEnabled: false
