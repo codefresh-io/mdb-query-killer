@@ -6,7 +6,7 @@ metadata:
     app: {{ $.Chart.Name }}
     chart: {{ $.Chart.Name }}
     version: {{ .Chart.Version }}
-    appVersion: {{ .Chart.appVersion }}
+    AppVersion: {{ .Chart.AppVersion }}
     release: {{ $.Release.Name  | quote }}
     heritage: {{ $.Release.Service  | quote }}
 spec:
@@ -24,7 +24,7 @@ spec:
         app: {{ $.Chart.Name }}
         chart: {{ $.Chart.Name }}
         version: {{ .Chart.Version }}
-        appVersion: {{ .Chart.appVersion }}
+        AppVersion: {{ .Chart.AppVersion }}
         heritage: {{ $.Release.Service  | quote }}
     spec:
       securityContext:
@@ -38,7 +38,7 @@ spec:
         - name: "{{ .Chart.Name }}-registry"
       containers:
       - name: {{ .Chart.Name }}
-        image: "{{ $.Values.image.registry }}/{{ $.Values.image.name }}:{{ $.Values.image.tag | default $.Chart.appVersion }}"
+        image: "{{ $.Values.image.registry }}/{{ $.Values.image.name }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
         imagePullPolicy: Always
         env:
           - name: MONGO_URI
