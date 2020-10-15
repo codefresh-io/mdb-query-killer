@@ -24,8 +24,6 @@ function validateVersion() {
     else
         err "App version check failed. Please update the version in the package.json file and make sure the appVersion in the Chart.yaml is equal"
     fi
-
-    export APP_VERSION="${curr_ver}"
 }
 
 validateVersion
