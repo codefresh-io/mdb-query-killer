@@ -2,7 +2,7 @@ affinity: {}
 
 image:
   registry: gcr.io/codefresh-inc
-  name: codefresh/mdb-query-terminator
+  name: codefresh/mdb-query-killer
 
 # dockerConfigB64: 
 

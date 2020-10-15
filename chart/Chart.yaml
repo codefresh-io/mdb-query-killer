@@ -1,15 +1,15 @@
 apiVersion: v1
 description: Terminates long running mongo operations
-name: mdb-query-terminator
+name: mdb-query-killer
 version: 0.1.0
 appVersion: 0.1.1
 keywords:
 - mongo
 - query
-- terminator
+- killer
 home: https://codefresh.io/
 sources:
-- https://github.com/codefresh-io/mdb-query-terminator
+- https://github.com/codefresh-io/mdb-query-killer
 maintainers:
 - name: Alexander Cheshko
   email: a.cheshko@codefresh.io

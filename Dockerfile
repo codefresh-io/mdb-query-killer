@@ -1,6 +1,6 @@
 FROM node:lts-alpine3.12
 
-WORKDIR /mdb-query-terminator
+WORKDIR /mdb-query-killer
 
 COPY package.json .
 
