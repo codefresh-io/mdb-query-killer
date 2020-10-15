@@ -60,14 +60,14 @@ async function mainLoop(cfg, client) {
             });
         }
 
+        let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
+
+        // wait for all the pending queries before starting the next iteration
+        await Promise.all(promises);
+
         if (sigTerm) {
             return Promise.resolve();
         }
-
-        let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
-        
-        // wait for all the pending queries before starting the next iteration
-        await Promise.all(promises);
 
         await timeout;
     }
@@ -76,12 +76,9 @@ async function mainLoop(cfg, client) {
 async function handleSigTerm(client, semaphore) {
     console.log("Handling the received SIGTERM signal...");
     sigTerm = true;
-    if (!_.get(timer, '_destroyed', true)) {
-        clearTimeout(timer);
-    } else {
+    if (_.get(timer, '_destroyed', true)) {
         await semaphore;
     }
-
     await client.close();
     console.log("Successfully handled the SIGTERM signal and exited gracefully...");
     process.exit(0);
@@ -95,8 +92,8 @@ async function main() {
 
     const loopFinished = mainLoop(cfg, client);
 
-    process.on('SIGTERM', async ()=> {
-       await handleSigTerm(client, loopFinished)
+    process.on('SIGTERM', async () => {
+        await handleSigTerm(client, loopFinished)
     });
 }
 
