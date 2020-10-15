@@ -1,0 +1,62 @@
+version: "1.0"
+stages:
+  - clone
+  - prepare
+  - build
+  - push_dev
+  - release
+steps:
+
+  main_clone:
+    title: 'Cloning main repository...'
+    stage: clone
+    type: git-clone
+    repo: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}
+    revision: ${{CF_REVISION}}
+    git: ${{GIT_CONTEXT}}
+
+  validate_version:
+    title: 'Validating the app version...'
+    stage: prepare
+    image: codefreshio/ci-helpers
+    commands:
+      - ci/validate_version.sh
+      - cf_export APP_VERSION
+
+  build_image:
+    title: "Building the image..."
+    type: build
+    stage: build
+    dockerfile: ./Dockerfile
+    image_name: ${{IMAGE_NAME}}
+    registry: ${{REGISTRY_INTEGRATION}}
+    tag: ${{CF_BRANCH_TAG_NORMALIZED}}
+
+  release:
+    type: parallel
+    stage: release
+    when:
+     branch:
+      only: [ master ]
+     steps:
+      - name: validate_version
+        on:
+          - success
+    steps:
+      create_git_tag:
+        image: codefreshio/ci-helpers
+        stage: release
+        commands:
+          - |-
+            source /get-token/get-gh-token.sh
+            curl --fail -X POST -d "{\"ref\": \"refs/tags/${APP_VERSION}\", \"sha\": \"${CF_REVISION}\"}" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${CF_REPO_OWNER}/${CF_REPO_NAME}/git/refs
+
+      push_prod_image:
+        title: "Pushing production image tag"
+        stage: release
+        type: push
+        registry: "${{REGISTRY_INTEGRATION}}"
+        candidate: ${{build_image}}
+        tags: 
+          - "${{APP_VERSION}}"
+          - "latest"
