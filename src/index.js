@@ -1,6 +1,7 @@
 const { MongoClient } = require('mongodb');
 const _ = require('lodash');
 const cfg = require('./config');
+const validate = require('jsonschema').validate;
 
 async function getLongRunningOps(client, threshold) {
     const res = await client.db().admin().command({
@@ -34,6 +35,16 @@ async function killOp(client, op) {
     }
 }
 
+function matchesFilter(obj, jsonschema) {
+    try {
+        return validate(obj, jsonschema).valid;
+    }
+    catch (e) {
+        console.log(`An exception occurred on trying to match the kill filter: ${e}`);
+        return false;
+    }
+}
+
 async function mainLoop(cfg, client) {
     while (true) {
         if (sigTerm) {
@@ -50,7 +61,7 @@ async function mainLoop(cfg, client) {
                     promises.push(res);
                 }
                 if (cfg.killingEnabled) {
-                    if (_.isMatch(op, cfg.killFilter)) {
+                    if (matchesFilter(op, cfg.killFilter)) {
                         let res = killOp(client, op);
                         promises.push(res);
                     } else {

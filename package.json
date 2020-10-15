@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jsonschema": "^1.2.11",
     "lodash": "^4.17.20",
     "mongodb": "^3.6.2"
   }
