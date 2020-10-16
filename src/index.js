@@ -67,7 +67,7 @@ async function mainLoop(cfg, client) {
                 }
 
             });
-            if (cfg.killingEnabled) {
+            if (!cfg.killingEnabled) {
                 console.log("Operations will not be killed, as killing is disabled");
             }
         }
