@@ -23,6 +23,7 @@ steps:
     image: alpine/helm:3.3.4
     stage: deploy
     commands:
+      - if [[ ${CF_BRANCH} != "master" ]]; then export IMAGE_TAG=${CF_BRANCH_TAG_NORMALIZED}; fi
       - |-
         helm upgrade ${{RELEASE_NAME}} ./chart \
         --install \
@@ -30,4 +31,4 @@ steps:
         --atomic \
         --kube-context ${{TARGET_CLUSTER}} \
         -f ${{VALUES_FILEPATH}} \
-        --dry-run
+        --set image.tag=${IMAGE_TAG}
