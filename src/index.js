@@ -65,7 +65,11 @@ async function mainLoop(cfg, client) {
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
                     }
                 }
+
             });
+            if (cfg.killingEnabled) {
+                console.log("Operations will not be killed, as killing is disabled");
+            }
         }
 
         let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
