@@ -1,13 +1,4 @@
-affinity: {}
-
-image:
-  registry: gcr.io/codefresh-inc
-  name: codefresh/mdb-query-killer
-
-# dockerConfigB64: 
-
-config: |
-  {
+{
     "mongoURI": "mongodb://root:password@localhost:27017/admin?retryWrites=true&w=majority",
     "thresholdSeconds": 90,
     "checkIntervalSeconds": 30,
@@ -26,4 +17,4 @@ config: |
     "longOpsCollection":  "long-queries",
     "killedOpsCollection": "killed-queries",
     "killingEnabled": true
-  }
+}

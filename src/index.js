@@ -1,6 +1,7 @@
 const { MongoClient } = require('mongodb');
 const _ = require('lodash');
 const cfg = require('./config');
+const validate = require('jsonschema').validate;
 
 async function getLongRunningOps(client, threshold) {
     const res = await client.db().admin().command({
@@ -34,11 +35,18 @@ async function killOp(client, op) {
     }
 }
 
+function matchesFilter(obj, jsonschema) {
+    try {
+        return validate(obj, jsonschema).valid;
+    }
+    catch (e) {
+        console.log(`An exception occurred on trying to match the kill filter: ${e}`);
+        return false;
+    }
+}
+
 async function mainLoop(cfg, client) {
     while (true) {
-        if (sigTerm) {
-            return Promise.resolve();
-        }
         let promises = [];
         console.log("Checking for long running operations...");
         let ops = await getLongRunningOps(client, cfg.thresholdSeconds);
@@ -50,24 +58,27 @@ async function mainLoop(cfg, client) {
                     promises.push(res);
                 }
                 if (cfg.killingEnabled) {
-                    if (_.isMatch(op, cfg.killFilter)) {
+                    if (matchesFilter(op, cfg.killFilter)) {
                         let res = killOp(client, op);
                         promises.push(res);
                     } else {
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
                     }
                 }
+
             });
+            if (!cfg.killingEnabled) {
+                console.log("Operations will not be killed, as killing is disabled");
+            }
         }
+
+        let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
+
+        await Promise.all(promises);
 
         if (sigTerm) {
             return Promise.resolve();
         }
-
-        let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
-        
-        // wait for all the pending queries before starting the next iteration
-        await Promise.all(promises);
 
         await timeout;
     }
@@ -76,12 +87,9 @@ async function mainLoop(cfg, client) {
 async function handleSigTerm(client, semaphore) {
     console.log("Handling the received SIGTERM signal...");
     sigTerm = true;
-    if (!_.get(timer, '_destroyed', true)) {
-        clearTimeout(timer);
-    } else {
+    if (_.get(timer, '_destroyed', true)) {
         await semaphore;
     }
-
     await client.close();
     console.log("Successfully handled the SIGTERM signal and exited gracefully...");
     process.exit(0);
@@ -95,8 +103,8 @@ async function main() {
 
     const loopFinished = mainLoop(cfg, client);
 
-    process.on('SIGTERM', async ()=> {
-       await handleSigTerm(client, loopFinished)
+    process.on('SIGTERM', async () => {
+        await handleSigTerm(client, loopFinished)
     });
 }
 
