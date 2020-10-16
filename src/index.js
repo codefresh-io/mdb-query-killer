@@ -47,9 +47,6 @@ function matchesFilter(obj, jsonschema) {
 
 async function mainLoop(cfg, client) {
     while (true) {
-        if (sigTerm) {
-            return Promise.resolve();
-        }
         let promises = [];
         console.log("Checking for long running operations...");
         let ops = await getLongRunningOps(client, cfg.thresholdSeconds);
@@ -73,7 +70,6 @@ async function mainLoop(cfg, client) {
 
         let timeout = new Promise(resolve => timer = setTimeout(resolve, cfg.checkIntervalSeconds * 1000));
 
-        // wait for all the pending queries before starting the next iteration
         await Promise.all(promises);
 
         if (sigTerm) {
