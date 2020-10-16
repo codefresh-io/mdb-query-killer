@@ -1,0 +1,82 @@
+version: "1.0"
+stages:
+  - clone
+  - prepare
+  - build
+  - push_dev
+  - release
+  - deploy
+steps:
+
+  main_clone:
+    title: 'Cloning main repository...'
+    stage: clone
+    type: git-clone
+    repo: ${{CF_REPO_OWNER}}/${{CF_REPO_NAME}}
+    revision: ${{CF_REVISION}}
+    git: ${{GIT_CONTEXT}}
+
+  validate_version:
+    title: 'Validating the app version...'
+    stage: prepare
+    image: codefreshio/ci-helpers
+    when:
+      branch:
+        ignore: [master]
+    commands:
+      - source ci/validate_version.sh
+
+  export_app_version:
+    stage: prepare
+    image: codefreshio/ci-helpers
+    commands:
+      - cf_export APP_VERSION=$(jq -r .version package.json)
+
+  build_image:
+    title: "Building the image..."
+    type: build
+    stage: build
+    dockerfile: ./Dockerfile
+    image_name: ${{IMAGE_NAME}}
+    registry: ${{REGISTRY_INTEGRATION}}
+    tag: ${{CF_BRANCH_TAG_NORMALIZED}}
+
+  release:
+    type: parallel
+    stage: release
+    when:
+     branch:
+      only: [ master ]
+
+    steps:
+      create_git_tag:
+        image: codefreshio/ci-helpers
+        stage: release
+        commands:
+          - |-
+            source /get-token/get-gh-token.sh
+            if [[ $(git tag) = "${{APP_VERSION}}" ]]; then 
+              echo "Git tag is already created, skipping..."
+              exit 0 
+            fi
+            curl --fail -X POST -d "{\"ref\": \"refs/tags/${APP_VERSION}\", \"sha\": \"${CF_REVISION}\"}" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${CF_REPO_OWNER}/${CF_REPO_NAME}/git/refs
+
+      push_prod_image:
+        title: "Pushing production image tag"
+        stage: release
+        type: push
+        registry: "${{REGISTRY_INTEGRATION}}"
+        candidate: ${{build_image}}
+        tags: 
+          - "${{APP_VERSION}}"
+          - "latest"
+
+  deploy:
+    title: "Running the deploy pipeline..."
+    stage: deploy
+    image: codefresh/cli
+    when:
+      branch:
+        only: [master]
+    commands:
+      - codefresh run ${{DEPLOY_PIPELINE_NAME}} --trigger production --branch master

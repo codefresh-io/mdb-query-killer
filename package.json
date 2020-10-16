@@ -1,6 +1,6 @@
 {
-  "name": "mdb-query-terminator",
-  "version": "0.1.0",
+  "name": "mdb-query-killer",
+  "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
   "scripts": {
@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jsonschema": "^1.2.11",
     "lodash": "^4.17.20",
     "mongodb": "^3.6.2"
   }

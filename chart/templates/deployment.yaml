@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Chart.Name }}
+  labels:
+    app: {{ $.Chart.Name }}
+    chart: {{ $.Chart.Name }}
+    version: {{ .Chart.Version }}
+    AppVersion: {{ .Chart.AppVersion }}
+    release: {{ $.Release.Name  | quote }}
+    heritage: {{ $.Release.Service  | quote }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0%
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+  template:
+    metadata:      
+      labels:
+        app: {{ $.Chart.Name }}
+        chart: {{ $.Chart.Name }}
+        version: {{ .Chart.Version }}
+        AppVersion: {{ .Chart.AppVersion }}
+        heritage: {{ $.Release.Service  | quote }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsGroup: 0
+        fsGroup: 0
+        runAsUser: 1000
+      affinity:
+{{ toYaml $.Values.affinity | indent 8 }}
+      imagePullSecrets:
+        - name: "{{ .Chart.Name }}-registry"
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ $.Values.image.registry }}/{{ $.Values.image.name }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+        imagePullPolicy: Always
+        args: ["/etc/mdb-query-killer/config.json"]
+        volumeMounts:
+          - name: config
+            mountPath: /etc/mdb-query-killer/config.json
+            subPath: config.json
+      volumes:
+      - name: config
+        secret:
+          secretName: {{ .Chart.Name }}
