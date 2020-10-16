@@ -4,10 +4,10 @@ _ = require("lodash");
 const defaultKillFilter = {
     "type": "object",
     "properties": {
-      "op": {
-        "type": "string",
-        "enum": ["query"]
-      }
+        "op": {
+            "type": "string",
+            "enum": ["query"]
+        }
     },
     "additionalProperties": true
 }
@@ -24,7 +24,17 @@ const configEnv = {
     killingEnabled: Boolean(process.env.KILLING_ENABLED) || false
 }
 
-const configFile = JSON.parse(fs.readFileSync(process.argv[2]));
+let configFile;
+try {
+    const cfgFilepath = process.argv[2] ;
+    if (cfgFilepath) {
+        configFile = JSON.parse(fs.readFileSync(cfgFilepath));
+    } else {
+        console.log("Config file is not specified, using the default values");
+    }
+} catch {
+    console.error("Failed to parse the config file, using the default values");
+}
 
 const config = _.merge(configEnv, configFile);
 

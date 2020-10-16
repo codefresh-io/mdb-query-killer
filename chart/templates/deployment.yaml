@@ -40,29 +40,12 @@ spec:
       - name: {{ .Chart.Name }}
         image: "{{ $.Values.image.registry }}/{{ $.Values.image.name }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
         imagePullPolicy: Always
-        env:
-          - name: MONGO_URI
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Chart.Name }}
-                key: mongo-uri
-          - name: THRESHOLD_SEC
-            value: "{{ $.Values.config.thresholdSeconds }}"    
-          - name: CHECK_INTERVAL_SEC
-            value: "{{ $.Values.config.checkIntervalSeconds }}"
-          - name: KILL_FILTER
-            value: "{{ $.Values.config.killFilter }}"
-          {{- if $.Values.config.recordAllLongOps }}  
-          - name: RECORD_ALL_LONG_OPS
-            value: "1"
-          {{- end }} 
-          - name: LONG_OPS_DB
-            value: "{{ $.Values.config.longOpsDB }}"   
-          - name: LONG_OPS_COLLECTION
-            value: "{{ $.Values.config.longOpsCollection }}"  
-          - name: KILLED_OPS_COLLECTION
-            value: "{{ $.Values.config.killedOpsCollection }}"
-          {{- if $.Values.config.killingEnabled }} 
-          - name: KILLING_ENABLED
-            value: "1"
-          {{- end }} 
+        args: ["/etc/mdb-query-killer/config.json"]
+        volumeMounts:
+          - name: config
+            mountPath: /etc/mdb-query-killer/config.json
+            subPath: config.json
+      volumes:
+      - name: config
+        secret:
+          secretName: {{ .Chart.Name }}
