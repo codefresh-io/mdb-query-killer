@@ -1,3 +1,4 @@
+fs = require("fs");
 _ = require("lodash");
 
 const defaultKillFilter = {
@@ -11,7 +12,7 @@ const defaultKillFilter = {
     "additionalProperties": true
 }
 
-const config = {
+const configEnv = {
     mongoURI: process.env.MONGO_URI || 'mongodb://root:password@localhost:27017/admin?retryWrites=true&w=majority',
     thresholdSeconds: Number(process.env.THRESHOLD_SEC) || 90,
     checkIntervalSeconds: Number(process.env.CHECK_INTERVAL_SEC) || 30,
@@ -22,5 +23,9 @@ const config = {
     killedOpsCollection: process.env.KILLED_OPS_COLLECTION || 'killed-queries',
     killingEnabled: Boolean(process.env.KILLING_ENABLED) || false
 }
+
+const configFile = JSON.parse(fs.readFileSync(process.argv[2]));
+
+const config = _.merge(configEnv, configFile);
 
 module.exports = config;
