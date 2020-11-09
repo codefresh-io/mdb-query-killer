@@ -52,10 +52,11 @@ steps:
       create_git_tag:
         image: codefreshio/ci-helpers
         stage: release
+        shell: bash
         commands:
           - |-
             source /get-token/get-gh-token.sh
-            if [[ $(git tag) = "${{APP_VERSION}}" ]]; then 
+            if [[ "$(git describe --tags --abbrev=0)" == "${{APP_VERSION}}" ]]; then 
               echo "Git tag is already created, skipping..."
               exit 0 
             fi
