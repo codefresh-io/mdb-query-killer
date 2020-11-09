@@ -31,4 +31,5 @@ steps:
         --atomic \
         --kube-context ${{TARGET_CLUSTER}} \
         -f ${{VALUES_FILEPATH}} \
-        --set image.tag=${IMAGE_TAG}
+        --set image.tag=${IMAGE_TAG} \
+        --set addons.collscanOps.image.tag=${IMAGE_TAG}

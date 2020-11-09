@@ -32,14 +32,28 @@ steps:
     commands:
       - cf_export APP_VERSION=$(jq -r .version package.json)
 
-  build_image:
-    title: "Building the image..."
-    type: build
+  build:
+    type: parallel
     stage: build
-    dockerfile: ./Dockerfile
-    image_name: ${{IMAGE_NAME}}
-    registry: ${{REGISTRY_INTEGRATION}}
-    tag: ${{CF_BRANCH_TAG_NORMALIZED}}
+    steps:
+
+      build_image:
+        title: "Building the image..."
+        type: build
+        stage: build
+        dockerfile: ./Dockerfile
+        image_name: ${{IMAGE_NAME}}
+        registry: ${{REGISTRY_INTEGRATION}}
+        tag: ${{CF_BRANCH_TAG_NORMALIZED}}
+
+      build_addon_image:
+        title: "Building the addon collscan-op-checker image..."
+        type: build
+        stage: build
+        dockerfile: ./src/addons/collscan-op-checker/Dockerfile
+        image_name: ${{COLLSCAN_OPS_IMAGE_NAME}}
+        registry: ${{REGISTRY_INTEGRATION}}
+        tag: ${{CF_BRANCH_TAG_NORMALIZED}}
 
   release:
     type: parallel
@@ -52,10 +66,11 @@ steps:
       create_git_tag:
         image: codefreshio/ci-helpers
         stage: release
+        shell: bash
         commands:
           - |-
             source /get-token/get-gh-token.sh
-            if [[ $(git tag) = "${{APP_VERSION}}" ]]; then 
+            if [[ "$(git describe --tags --abbrev=0)" == "${{APP_VERSION}}" ]]; then 
               echo "Git tag is already created, skipping..."
               exit 0 
             fi
@@ -67,6 +82,16 @@ steps:
         type: push
         registry: "${{REGISTRY_INTEGRATION}}"
         candidate: ${{build_image}}
+        tags: 
+          - "${{APP_VERSION}}"
+          - "latest"
+
+      push_prod_addon_image:
+        title: "Pushing addon image tag"
+        stage: release
+        type: push
+        registry: "${{REGISTRY_INTEGRATION}}"
+        candidate: ${{build_addon_image}}
         tags: 
           - "${{APP_VERSION}}"
           - "latest"

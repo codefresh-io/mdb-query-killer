@@ -22,8 +22,25 @@ config: |
         "additionalProperties": true
     },
     "recordAllLongOps": true,
-    "longOpsDB": "long-queries",
+    "longOpsDB": "operations",
     "longOpsCollection":  "long-queries",
     "killedOpsCollection": "killed-queries",
     "killingEnabled": true
   }
+
+addons:
+  collscanOps:
+    image:
+      registry: gcr.io/codefresh-inc
+      name: codefresh/collscan-ops-checker
+    config: |
+      {
+        "scanIntervalSec": 3600,
+        "slackHookURL": "https://hooks.slack.com/services/DUMMY/HOOK/TokeNasdqw4623542dsfjk",
+        "atlasAPI": {
+            "groupID": "5ed4aqew1ecc9e2ee2e3qhuc",
+            "clusterHostName": "some-db-shard-00-00.1dptz.gcp.mongodb.net",
+            "publKey": "mqkqyubj",
+            "privKey": "dummy-key2-qwg4-sdg7-qwe47rgh0000"
+        }
+      }

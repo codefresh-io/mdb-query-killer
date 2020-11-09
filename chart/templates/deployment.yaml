@@ -26,6 +26,7 @@ spec:
         version: {{ .Chart.Version }}
         AppVersion: {{ .Chart.AppVersion }}
         heritage: {{ $.Release.Service  | quote }}
+        revision: {{ $.Release.Revision | quote }}
     spec:
       securityContext:
         runAsNonRoot: true
@@ -45,7 +46,18 @@ spec:
           - name: config
             mountPath: /etc/mdb-query-killer/config.json
             subPath: config.json
+      - name: collscan-ops
+        image: "{{ $.Values.addons.collscanOps.image.registry }}/{{ $.Values.addons.collscanOps.image.name }}:{{ $.Values.addons.collscanOps.image.tag | default $.Chart.AppVersion }}"
+        imagePullPolicy: Always
+        args: ["/etc/collscan-ops/config.json"]
+        volumeMounts:
+          - name: addon-collscan-ops-config
+            mountPath: /etc/collscan-ops/config.json
+            subPath: collscan-ops-config.json
       volumes:
       - name: config
+        secret:
+          secretName: {{ .Chart.Name }}
+      - name: addon-collscan-ops-config
         secret:
           secretName: {{ .Chart.Name }}
