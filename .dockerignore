@@ -5,3 +5,4 @@ Dockerfile*
 ci
 examples
 test*
+src/addons/collscan-op-checker/test
