@@ -26,6 +26,7 @@ spec:
         version: {{ .Chart.Version }}
         AppVersion: {{ .Chart.AppVersion }}
         heritage: {{ $.Release.Service  | quote }}
+        revision: {{ $.Release.Revision | quote }}
     spec:
       securityContext:
         runAsNonRoot: true
