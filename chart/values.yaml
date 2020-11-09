@@ -22,7 +22,7 @@ config: |
         "additionalProperties": true
     },
     "recordAllLongOps": true,
-    "longOpsDB": "long-queries",
+    "longOpsDB": "operations",
     "longOpsCollection":  "long-queries",
     "killedOpsCollection": "killed-queries",
     "killingEnabled": true

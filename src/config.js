@@ -18,7 +18,7 @@ const configEnv = {
     checkIntervalSeconds: Number(process.env.CHECK_INTERVAL_SEC) || 30,
     killFilter: _.get(process, 'env.KILL_FILTER') && JSON.parse(process.env.KILL_FILTER) || defaultKillFilter,
     recordAllLongOps: Boolean(process.env.RECORD_ALL_LONG_OPS) || false,
-    longOpsDB: process.env.LONG_OPS_DB || 'long-queries',
+    longOpsDB: process.env.LONG_OPS_DB || 'operations',
     longOpsCollection: process.env.LONG_OPS_COLLECTION || 'long-queries',
     killedOpsCollection: process.env.KILLED_OPS_COLLECTION || 'killed-queries',
     killingEnabled: Boolean(process.env.KILLING_ENABLED) || false
