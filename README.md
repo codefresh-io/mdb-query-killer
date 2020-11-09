@@ -63,6 +63,8 @@ The pipeline has 2 triggers - one for `production` and another for `staging` clu
 |NAMESPACE|K8s Namespace, where the application will be installed to |
 |VALUES_SHRD_CTX_NAME| The name of a [Shared Configuration](https://codefresh.io/docs/docs/configure-ci-cd-pipeline/shared-configuration/) of type "YAML", which is present in the account. It defines a set of passed Helm values|
 
+You can also run the deployment pipeline *manually* selecting a trigger and your branch.
+
 If you need to update some configuration values of the killer without pushing any code changes, do the following:
 1. Find the corresponding Shared Configuration in the `codefresh-inc` account, change it in-place using Codefresh UI and save it.
 2. Run the deployment pipeline, selecting one of the triggers and specifiying the master branch. For the staging cluster you can select a different branch.
