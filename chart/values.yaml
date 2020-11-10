@@ -30,6 +30,7 @@ config: |
 
 addons:
   collscanOps:
+    enabled: true
     image:
       registry: gcr.io/codefresh-inc
       name: codefresh/collscan-ops-checker
