@@ -31,6 +31,7 @@ An example of such configuration file is [here](https://github.com/codefresh-io/
 | longOpsCollection | Relevant only with the `recordAllLongOps` flag set. Defines a name for the mongo collection, where the long running operations are recorded to | String | long-queries
 | killedOpsCollection | Defines a name for the mongo collection, where the long running operations are recorded to right before they are killed | String | killed-queries
 | killingEnabled | Enables/Disables killing of the operations | Bool | false
+| slackHookURL | Slack webhook URL to send alerts about the killed operations | string | - |
 
 ## Installation
 

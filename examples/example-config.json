@@ -16,5 +16,6 @@
     "longOpsDB": "operations",
     "longOpsCollection":  "long-queries",
     "killedOpsCollection": "killed-queries",
-    "killingEnabled": true
+    "killingEnabled": true,
+    "slackHookURL": "https://hooks.slack.com/services/ASDSHHH21/VSBE0S22S/dummyRSqwDqweqwWWLms123123"
 }
