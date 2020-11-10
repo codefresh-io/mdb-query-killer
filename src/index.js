@@ -1,7 +1,8 @@
 const { MongoClient } = require('mongodb');
+const SlackWebhook = require('slack-webhook');
+const validate = require('jsonschema').validate;
 const _ = require('lodash');
 const cfg = require('./config');
-const validate = require('jsonschema').validate;
 
 async function getLongRunningOps(client, threshold) {
     const res = await client.db().admin().command({
@@ -21,6 +22,18 @@ async function recordOp(client, op, dbname, collection) {
     } catch (e) {
         console.log(`Failed to record a long running operation with ID: ${op.opid}`);
     }
+}
+
+function slackOp(op, slackHookURL) {
+    const slack = new SlackWebhook(slackHookURL);
+    const text = `*Killed a long running operation:*\n\`\`\`${JSON.stringify(op)}\`\`\``;
+    return slack.send({ text: text })
+        .then(() => {
+            console.log("Slack notification has been successfully sent");
+        })
+        .catch(function (e) {
+            console.error(`Couldn't send notification to slack , error : ${e}`);
+        });
 }
 
 async function killOp(client, op) {
@@ -59,7 +72,11 @@ async function mainLoop(cfg, client) {
                 }
                 if (cfg.killingEnabled) {
                     if (matchesFilter(op, cfg.killFilter)) {
-                        let res = killOp(client, op);
+                        let res = killOp(client, op)
+                            .then(() => {
+                                console.log("Sending notification about the killed opration to Slack...");
+                                return slackOp(op, cfg.slackHookURL);
+                            });
                         promises.push(res);
                     } else {
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
