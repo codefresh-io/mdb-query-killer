@@ -81,3 +81,13 @@ There is a CI [pipeline](https://g.codefresh.io/pipelines/edit/workflow?id=5f883
 3. Runs the [deployment pipeline](https://g.codefresh.io/pipelines/edit/workflow?id=5f883eb9e76a53333c2f5b8a&pipeline=cd-mdb-query-killer&projects=mongo-query-killer&projectId=5f882f99e76a5355a52f5add)
 
 Details about the deployment pipeline you can find above in the "Installation" section of this document.
+
+## Add-ons
+
+All add-ons are managed in this folder [src/addons](https://github.com/codefresh-io/mdb-query-killer/tree/master/src/addons).
+
+### collscan-ops-checker
+
+This sub-service is intended to detect mongo operations that do full collection scan (COLLSCAN operations) and send an alert message to a Slack channel containing information about the operation. It is related to [CR-1425](https://codefresh-io.atlassian.net/browse/CR-1425).
+
+All the related documentation can be found in the README.md of the add-on specific [folder](https://github.com/codefresh-io/mdb-query-killer/tree/master/src/addons/collscan-op-checker)

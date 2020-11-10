@@ -46,6 +46,7 @@ spec:
           - name: config
             mountPath: /etc/mdb-query-killer/config.json
             subPath: config.json
+      {{- if $.Values.addons.collscanOps.enabled }}
       - name: collscan-ops
         image: "{{ $.Values.addons.collscanOps.image.registry }}/{{ $.Values.addons.collscanOps.image.name }}:{{ $.Values.addons.collscanOps.image.tag | default $.Chart.AppVersion }}"
         imagePullPolicy: Always
@@ -54,10 +55,13 @@ spec:
           - name: addon-collscan-ops-config
             mountPath: /etc/collscan-ops/config.json
             subPath: collscan-ops-config.json
+      {{- end }}
       volumes:
       - name: config
         secret:
           secretName: {{ .Chart.Name }}
+      {{- if $.Values.addons.collscanOps.enabled }}
       - name: addon-collscan-ops-config
         secret:
           secretName: {{ .Chart.Name }}
+      {{- end }}
