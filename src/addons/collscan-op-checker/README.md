@@ -7,9 +7,10 @@ This sub-service is intended to detect mongo operations that do full collection 
 ## Implementation details
 
 The service does the following in a loop:
-1. Gets logs of a target mongo cluster via Atlas API for a specified amount of time (`scanIntervalSec` config value)
-2. Decompresses the log and searches for the operations that has `COLLSCAN` as the `planSummary` value.
-3. Sends each found log line as is to a specified Slack channel.
+1. Discovers a primary replica of the target mongo cluster
+2. Gets logs from the primary replica via Atlas API for a specified amount of time (`scanIntervalSec` config value)
+3. Decompresses the log and searches for the operations that has `COLLSCAN` as the `planSummary` value.
+4. Sends each found log line as is to a specified Slack channel.
 
 The service code runs in a *separate container* within the `mdb-query-killer` pod. It is integrated into the relevant Helm [chart](https://github.com/codefresh-io/mdb-query-killer/tree/master/chart) and shares the same [values file](https://github.com/codefresh-io/mdb-query-killer/blob/master/chart/values.yaml)
 
@@ -21,9 +22,9 @@ The service consumes a JSON config file. Example:
 {
     "scanIntervalSec": 300,
     "slackHookURL": "https://hooks.slack.com/services/DUMMY/HOOK/TokeNasdqw4623542dsfjk",
+    "mongoURI": "mongodb://root:password@localhost:27017/admin?retryWrites=true&w=majority",
     "atlasAPI": {
         "groupID": "5ed4aqew1ecc9e2ee2e3qhuc",
-        "clusterHostName": "some-db-shard-00-00.1dptz.gcp.mongodb.net",
         "publKey": "mqkqyubj",
         "privKey": "dummy-key2-qwg4-sdg7-qwe47rgh0000"
     }
@@ -37,8 +38,8 @@ List of the *application* configuration values:
 |---|---|--|--|
 |`scanIntervalSec` | Defines how frequently it performs the checks in seconds. It is not advised to set this value lesser than 60 seconds | int | - |
 |`slackHookURL` | Slack webhook URL for the alerts to be sent | string | - |
+|`mongoURI` | Mongo URI connection string. Used for primary replica discovery | string | - |
 |`atlasAPI.groupID` | Atlas API related [group id](https://docs.atlas.mongodb.com/api/#project-id) | string | - |
-|`atlasAPI.clusterHostName` | MongoDB cluster name | string | - |
 |`atlasAPI.publKey` | Atlas API public key | string | - |
 |`atlasAPI.privKey` | Atlas API private key | string | - |
 
@@ -46,10 +47,10 @@ List of the *Helm* configuration values:
 |Value name|Description|Type|Default value
 |---|---|--|--|
 |`addons.collscanOps.enabled`| The addon can be disabled/enabled by this value | bool| true |
+|`addons.collscanOps.config`| Contents of the application config JSON | string | - |
 |`addons.collscanOps.image.registry`| Docker registry prefix for the application image | string | "gcr.io/codefresh-inc" |
 |`addons.collscanOps.image.name`| Name for the application image | string | "codefresh/collscan-ops-checker" |
 |`addons.collscanOps.image.tag`| Optional tag for the image| string | {{ $.Chart.AppVersion }} |
-|`addons.collscanOps.config`| Contents of the application config JSON | string | - |
 
 ## CI/CD flow & Installation
 

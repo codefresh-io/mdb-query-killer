@@ -1,3 +1,4 @@
+const { MongoClient } = require('mongodb');
 const zlib = require('zlib');
 const SlackWebhook = require('slack-webhook');
 const cfg = require('./config');
@@ -7,10 +8,10 @@ const _ = require('lodash');
 // gets the Mongo log gzip using Atlas API
 // and returns an array of log lines
 
-async function getMongoLog(atlasAPI, startDate, endDate) {
+async function getMongoLog(atlasAPI, hostName, startDate, endDate) {
     const options = {
         port: 443,
-        uri: `https://cloud.mongodb.com/api/atlas/v1.0/groups/${atlasAPI.groupID}/clusters/${atlasAPI.clusterHostName}/logs/mongodb.gz`,
+        uri: `https://cloud.mongodb.com/api/atlas/v1.0/groups/${atlasAPI.groupID}/clusters/${hostName}/logs/mongodb.gz`,
         method: 'GET',
         headers: {
             'Accept': 'application/gzip'
@@ -75,17 +76,41 @@ function alertCollscanOps(opLog, slackHookURL) {
         });
 }
 
-async function getCollScanOps(atlasAPI, scanIntervalSec) {
-    let log = await getMongoLog(atlasAPI, Date.now() - scanIntervalSec * 1000, Date.now());
+async function getPrimaryReplica(mongoClient) {
+    console.log("Discovering the primary replica name...")
+    try {
+        await mongoClient.connect();
+        const res = await mongoClient.db().admin().command({ isMaster: 1 });
+        primaryReplica = res.primary.split(':')[0];
+        console.log(`Primary replica is: ${primaryReplica}`);
+        return primaryReplica;
+    } catch (e) {
+        throw new Error(`Failed to get the primary replica name..., ${e.errmsg}`);
+    } finally {
+        mongoClient.close();
+    }
+}
+
+async function getCollScanOps(atlasAPI, replicaName, scanIntervalSec) {
+    let log = await getMongoLog(atlasAPI, replicaName, Date.now() - scanIntervalSec * 1000, Date.now());
     if (log.length == 0) {
         return [];
     }
     return searchLog(log, 'COLLSCAN');
 }
 
-async function mainLoop(cfg) {
+async function mainLoop(cfg, mongoClient) {
     console.log(`\nChecking for COLLSCAN operations for the past ${cfg.scanIntervalSec} seconds...`);
-    const collscanOps = await getCollScanOps(cfg.atlasAPI, cfg.scanIntervalSec);
+    
+    let primaryReplicaName;
+    try {
+        primaryReplicaName  = await getPrimaryReplica(mongoClient);
+    } catch (e) {
+        console.error(e);
+        return
+    }
+
+    const collscanOps = await getCollScanOps(cfg.atlasAPI, primaryReplicaName, cfg.scanIntervalSec);
 
     if (collscanOps.length !== 0) {
         console.log(`${collscanOps.length} COLLSCAN operations have been found`);
@@ -99,7 +124,8 @@ function init(cfg) {
     if (!cfg) {
         process.exit(1);
     }
-    mainLoop(cfg);
+    const mongoClient = new MongoClient(cfg.mongoURI, { useUnifiedTopology: true });
+    mainLoop(cfg, mongoClient);
     setInterval(mainLoop, cfg.scanIntervalSec * 1000, cfg);
 }
 
