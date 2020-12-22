@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
-const SlackWebhook = require('slack-webhook');
 const validate = require('jsonschema').validate;
 const _ = require('lodash');
+const Slack = require('./Slack');
 const cfg = require('./config');
 
 async function getLongRunningOps(client, threshold) {
@@ -20,31 +20,19 @@ async function recordOp(client, op, dbname, collection) {
             .collection(collection)
             .replaceOne({ opid: op.opid }, op, { upsert: true });
     } catch (e) {
-        console.log(`Failed to record a long running operation with ID: ${op.opid}`);
+        console.log(`Failed to record an operation with ID: ${op.opid}`);
+        throw e;
     }
 }
 
-function slackOp(op, slackHookURL) {
-    const slack = new SlackWebhook(slackHookURL);
-    const text = `*Killed a long running operation:*\n\`\`\`${JSON.stringify(op)}\`\`\``;
-    return slack.send({ text: text })
-        .then(() => {
-            console.log("Slack notification has been successfully sent");
-        })
-        .catch(function (e) {
-            console.error(`Couldn't send notification to slack , error : ${e}`);
-        });
-}
-
 async function killOp(client, op) {
-    let record = await recordOp(client, op, cfg.longOpsDB, cfg.killedOpsCollection);
-    if (record) { // kill operation only if it has been successfully recorded
-        try {
-            await client.db().admin().command({ killOp: 1, op: op.opid });
-            console.log(`Killed an operation with ID: ${op.opid}`);
-        } catch (e) {
-            console.log(`Failed killing operation with ID: ${op.opid}:\n${e}`);
-        }
+    try {
+        await recordOp(client, op, cfg.longOpsDB, cfg.killedOpsCollection);
+        await client.db().admin().command({ killOp: 1, op: op.opid });
+        console.log(`Killed an operation with ID: ${op.opid}`);
+    } catch (e) {
+        console.log(`Failed killing operation with ID: ${op.opid}:\n${e}`);
+        throw e;
     }
 }
 
@@ -58,7 +46,7 @@ function matchesFilter(obj, jsonschema) {
     }
 }
 
-async function mainLoop(cfg, client) {
+async function mainLoop(cfg, client, slack) {
     while (true) {
         let promises = [];
         console.log("Checking for long running operations...");
@@ -67,19 +55,24 @@ async function mainLoop(cfg, client) {
             _.forEach(ops, async (op) => {
                 console.log(`Detected a long running operation with ID: ${op.opid}`);
                 if (cfg.recordAllLongOps) {
-                    let res = recordOp(client, op, cfg.longOpsDB, cfg.longOpsCollection);
+                    let res = recordOp(client, op, cfg.longOpsDB, cfg.longOpsCollection)
+                        .catch(()=>{});
                     promises.push(res);
                 }
                 if (cfg.killingEnabled) {
                     if (matchesFilter(op, cfg.killFilter)) {
                         let res = killOp(client, op)
                             .then(() => {
-                                console.log("Sending notification about the killed opration to Slack...");
-                                return slackOp(op, cfg.slackHookURL);
+                                console.log("Sending notification about the killed operation to Slack...");
+                                return slack.send('Killed a long running operation', op);
+                            })
+                            .catch((e) => {
+                                return slack.send(`Failed killing an operation, error: ${e}`, op);
                             });
                         promises.push(res);
                     } else {
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
+                        return slack.send(`Detected an operation above the kill threshold, but not matching the kill filter`, op);
                     }
                 }
 
@@ -113,12 +106,14 @@ async function handleSigTerm(client, semaphore) {
 }
 
 async function main() {
+    const slack = new Slack(cfg.slackHookURL);
     const client = new MongoClient(cfg.mongoURI, { useUnifiedTopology: true });
+
     console.log("Connecting to the database...");
     await client.connect();
     console.log("Successfully connected, starting the main loop...");
 
-    const loopFinished = mainLoop(cfg, client);
+    const loopFinished = mainLoop(cfg, client, slack);
 
     process.on('SIGTERM', async () => {
         await handleSigTerm(client, loopFinished)
