@@ -23,8 +23,9 @@ An example of such configuration file is [here](https://github.com/codefresh-io/
 |Value name|Description|Type|Default value
 |---|---|--|--|
 | mongoURI  | Mongo connection string | String | mongodb://root:password@localhost:27017/admin?retryWrites=true&w=majority
-| thresholdSeconds  | Time in seconds a mongo operation must be running to trigger the killer| Int | 90
-| checkIntervalSeconds | Time in seconds between the checks | Int | 30
+| thresholdSeconds  | Time in seconds a mongo operation must be running to be reported | Int | 30
+| killThresholdSeconds  | Time in seconds a mongo operation must be running to trigger the killer | Int | 90
+| checkIntervalSeconds | Time in seconds between the checks | Int | 15
 | killFilter  | Defines a JSON schema, which is matched against a mongo operation object. If there is no match, operation will not be killed | JSON Schema Obj | See the default value [here](https://github.com/codefresh-io/mdb-query-killer/blob/e6fb356d850356c415c78c48b76b0614959cbb06/src/config.js#L4-L13)
 | recordAllLongOps | By default, only the killed operations are recorded. If this flag is `true`, all the operations above the threshold value will be recorded, not only the killed ones | Bool | false
 | longOpsDB  |  Defines a name of the mongo database, where the long running operations are recorded to | String | "operations"

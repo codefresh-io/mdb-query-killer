@@ -12,6 +12,17 @@ async function getLongRunningOps(client, threshold) {
     return res.inprog;
 }
 
+// reports long running ops that are finished
+// by comparing the current ops with the ops saved from the
+// previous iteration
+function reportLongRunningOps(slack, currentOps) {
+    const finishedOps = _.differenceBy(opsHistory, currentOps, 'opid');
+    for (op of finishedOps) {
+        console.log(`Sending notification about long running operation with ID ${op.opid}`);
+        slack.send(`Detected a long running operation with id ${op.opid}`, op);
+    }
+}
+
 async function recordOp(client, op, dbname, collection) {
     try {
         op.command = JSON.stringify(op.command);
@@ -51,6 +62,7 @@ async function mainLoop(cfg, client, slack) {
         let promises = [];
         console.log("Checking for long running operations...");
         let ops = await getLongRunningOps(client, cfg.thresholdSeconds);
+        reportLongRunningOps(slack, ops);
         if (ops.length !== 0) {
             _.forEach(ops, async (op) => {
                 console.log(`Detected a long running operation with ID: ${op.opid}`);
@@ -61,6 +73,7 @@ async function mainLoop(cfg, client, slack) {
                 }
                 if (cfg.killingEnabled) {
                     if (matchesFilter(op, cfg.killFilter)) {
+                        if (op.secs_running > cfg.killThresholdSeconds) {
                         let res = killOp(client, op)
                             .then(() => {
                                 console.log("Sending notification about the killed operation to Slack...");
@@ -69,7 +82,9 @@ async function mainLoop(cfg, client, slack) {
                             .catch((e) => {
                                 return slack.send(`Failed killing an operation, error: ${e}`, op);
                             });
-                        promises.push(res);
+                            return promises.push(res);
+                        }
+                        console.log(`Operation ${op.opid} is running less than ${cfg.killThresholdSeconds} seconds, delaying killing`);
                     } else {
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
                         return slack.send(`Detected an operation above the kill threshold, but not matching the kill filter`, op);
@@ -89,6 +104,8 @@ async function mainLoop(cfg, client, slack) {
         if (sigTerm) {
             return Promise.resolve();
         }
+
+        opsHistory = ops;
 
         await timeout;
     }
@@ -123,5 +140,9 @@ async function main() {
 // global vars for handling the sigterm properly
 var sigTerm;
 var timer;
+
+// array containing detected long running operations
+// to be kept between the loop iterations
+var opsHistory = [];
 
 main();

@@ -1,7 +1,8 @@
 {
     "mongoURI": "mongodb://root:password@localhost:27017/admin?retryWrites=true&w=majority",
-    "thresholdSeconds": 90,
-    "checkIntervalSeconds": 30,
+    "thresholdSeconds": 30,
+    "killThresholdSeconds": 90,
+    "checkIntervalSeconds": 15,
     "killFilter": {
         "type": "object",
         "properties": {

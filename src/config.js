@@ -14,8 +14,9 @@ const defaultKillFilter = {
 
 const configEnv = {
     mongoURI: process.env.MONGO_URI || 'mongodb://root:password@localhost:27017/admin?retryWrites=true&w=majority',
-    thresholdSeconds: Number(process.env.THRESHOLD_SEC) || 90,
-    checkIntervalSeconds: Number(process.env.CHECK_INTERVAL_SEC) || 30,
+    thresholdSeconds: Number(process.env.THRESHOLD_SEC) || 30,
+    killThresholdSeconds: Number(process.env.KILL_THRESHOLD_SEC) || 90,
+    checkIntervalSeconds: Number(process.env.CHECK_INTERVAL_SEC) || 15,
     killFilter: _.get(process, 'env.KILL_FILTER') && JSON.parse(process.env.KILL_FILTER) || defaultKillFilter,
     recordAllLongOps: Boolean(process.env.RECORD_ALL_LONG_OPS) || false,
     longOpsDB: process.env.LONG_OPS_DB || 'operations',
