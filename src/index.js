@@ -72,8 +72,8 @@ async function mainLoop(cfg, client, slack) {
                     promises.push(res);
                 }
                 if (cfg.killingEnabled) {
-                    if (matchesFilter(op, cfg.killFilter)) {
-                        if (op.secs_running > cfg.killThresholdSeconds) {
+                    if (op.secs_running > cfg.killThresholdSeconds) {
+                        if (matchesFilter(op, cfg.killFilter)) {
                         let res = killOp(client, op)
                             .then(() => {
                                 console.log("Sending notification about the killed operation to Slack...");
@@ -82,12 +82,13 @@ async function mainLoop(cfg, client, slack) {
                             .catch((e) => {
                                 return slack.send(`Failed killing an operation, error: ${e}`, op);
                             });
+                            _.remove(ops, (o) => { return o.opid == op.opid });
                             return promises.push(res);
                         }
-                        console.log(`Operation ${op.opid} is running less than ${cfg.killThresholdSeconds} seconds, delaying killing`);
-                    } else {
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
                         return slack.send(`Detected an operation above the kill threshold, but not matching the kill filter`, op);
+                    } else {
+                        console.log(`Operation ${op.opid} is running less than ${cfg.killThresholdSeconds} seconds, delaying killing`);
                     }
                 }
 
