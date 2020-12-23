@@ -1,2 +1,4 @@
 node_modules
 .vscode
+src/addons/collscan-op-checker/test
+test*
