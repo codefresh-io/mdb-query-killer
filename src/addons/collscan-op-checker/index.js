@@ -79,15 +79,12 @@ function alertCollscanOps(opLog, slackHookURL) {
 async function getPrimaryReplica(mongoClient) {
     console.log("Discovering the primary replica name...")
     try {
-        await mongoClient.connect();
         const res = await mongoClient.db().admin().command({ isMaster: 1 });
         primaryReplica = res.primary.split(':')[0];
         console.log(`Primary replica is: ${primaryReplica}`);
         return primaryReplica;
     } catch (e) {
         throw new Error(`Failed to get the primary replica name..., ${e.errmsg}`);
-    } finally {
-        mongoClient.close();
     }
 }
 
@@ -120,13 +117,14 @@ async function mainLoop(cfg, mongoClient) {
     }
 }
 
-function init(cfg) {
+async function init(cfg) {
     if (!cfg) {
         process.exit(1);
     }
     const mongoClient = new MongoClient(cfg.mongoURI, { useUnifiedTopology: true });
+    await mongoClient.connect();
     mainLoop(cfg, mongoClient);
-    setInterval(mainLoop, cfg.scanIntervalSec * 1000, cfg);
+    setInterval(mainLoop, cfg.scanIntervalSec * 1000, cfg, mongoClient);
 }
 
 init(cfg);
