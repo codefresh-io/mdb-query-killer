@@ -34,7 +34,6 @@ config: |
         "warnings": "atlas-db-long-ops"
       }
     }
-}
   }
 
 addons:
