@@ -27,7 +27,14 @@ config: |
     "longOpsCollection":  "long-queries",
     "killedOpsCollection": "killed-queries",
     "killingEnabled": true,
-    "slackHookURL": "https://hooks.slack.com/services/ASDSHHH21/VSBE0S22S/dummyRSqwDqweqwWWLms123123"
+    "slack": {
+      "webhookUrl": "https://hooks.slack.com/services/ASDSHHH21/VSBE0S22S/dummyRSqwDqweqwWWLms123123",
+      "channels": {
+        "alerts": "atlas-db-killed-ops",
+        "warnings": "atlas-db-long-ops"
+      }
+    }
+}
   }
 
 addons:

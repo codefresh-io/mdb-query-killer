@@ -1,11 +1,12 @@
 const SlackWebhook = require('slack-webhook');
 
 class Slack {
-    constructor(slackHookURL) {
-        this.slack = new SlackWebhook(slackHookURL);
+    constructor(cfg) {
+        this.slack = new SlackWebhook(cfg.webhookUrl);
+        this.channels = cfg.channels;
     }
 
-    send(header, body) {
+    send(header, body, channel) {
         let text;
         if (body) {
             text = `*${header}:*\n\`\`\`${JSON.stringify(body)}\`\`\``;
@@ -13,13 +14,21 @@ class Slack {
             text = header;
         }
 
-        return this.slack.send({ text: text })
+        return this.slack.send({ text: text, channel: `#${channel}` })
             .then(() => {
                 console.log("Slack notification has been successfully sent");
             })
             .catch(function (e) {
                 console.error(`Couldn't send notification to slack , error : ${e}`);
             });
+    }
+
+    alert(header, body) {
+        this.send(header, body, this.channels.alerts);
+    }
+    
+    warn(header, body) {
+        this.send(header, body, this.channels.warnings);
     }
 }
 

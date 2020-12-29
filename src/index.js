@@ -19,7 +19,7 @@ function reportLongRunningOps(slack, currentOps) {
     const finishedOps = _.differenceBy(opsHistory, currentOps, 'opid');
     for (op of finishedOps) {
         console.log(`Sending notification about long running operation with ID ${op.opid}`);
-        slack.send(`Detected a long running operation with id ${op.opid}`, op);
+        slack.warn(`Detected a long running operation with id ${op.opid}`, op);
     }
 }
 
@@ -77,16 +77,16 @@ async function mainLoop(cfg, client, slack) {
                         let res = killOp(client, op)
                             .then(() => {
                                 console.log("Sending notification about the killed operation to Slack...");
-                                return slack.send('Killed a long running operation', op);
+                                return slack.alert('Killed a long running operation', op);
                             })
                             .catch((e) => {
-                                return slack.send(`Failed killing an operation, error: ${e}`, op);
+                                return slack.alert(`Failed killing an operation, error: ${e}`, op);
                             });
                             _.remove(ops, (o) => { return o.opid == op.opid });
                             return promises.push(res);
                         }
                         console.log(`Operation ${op.opid} doesn't match the kill filter, ignoring`);
-                        return slack.send(`Detected an operation above the kill threshold, but not matching the kill filter`, op);
+                        return slack.alert(`Detected an operation above the kill threshold, but not matching the kill filter`, op);
                     } else {
                         console.log(`Operation ${op.opid} is running less than ${cfg.killThresholdSeconds} seconds, delaying killing`);
                     }
@@ -124,7 +124,7 @@ async function handleSigTerm(client, semaphore) {
 }
 
 async function main() {
-    const slack = new Slack(cfg.slackHookURL);
+    const slack = new Slack(cfg.slack);
     const client = new MongoClient(cfg.mongoURI, { useUnifiedTopology: true });
 
     console.log("Connecting to the database...");
