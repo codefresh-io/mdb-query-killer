@@ -24,12 +24,13 @@ function reportLongRunningOps(slack, currentOps) {
 }
 
 async function recordOp(client, op, dbname, collection) {
+    let storedOp = _.cloneDeep(op);
     try {
-        op.command = JSON.stringify(op.command);
-        op.originatingCommand = JSON.stringify(op.originatingCommand);
+        storedOp.command = JSON.stringify(op.command);
+        storedOp.originatingCommand = JSON.stringify(op.originatingCommand);
         return await client.db(dbname)
             .collection(collection)
-            .replaceOne({ opid: op.opid }, op, { upsert: true });
+            .replaceOne({ opid: op.opid }, storedOp, { upsert: true });
     } catch (e) {
         console.log(`Failed to record an operation with ID: ${op.opid}`);
         throw e;
