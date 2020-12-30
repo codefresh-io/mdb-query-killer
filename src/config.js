@@ -17,7 +17,7 @@ const configEnv = {
     thresholdSeconds: Number(process.env.THRESHOLD_SEC) || 30,
     killThresholdSeconds: Number(process.env.KILL_THRESHOLD_SEC) || 90,
     checkIntervalSeconds: Number(process.env.CHECK_INTERVAL_SEC) || 15,
-    killFilter: _.get(process, 'env.KILL_FILTER') && JSON.parse(process.env.KILL_FILTER) || defaultKillFilter,
+    killFilter: _.get(process, 'env.KILL_FILTER') && JSON.parse(process.env.KILL_FILTER),
     recordAllLongOps: Boolean(process.env.RECORD_ALL_LONG_OPS) || false,
     longOpsDB: process.env.LONG_OPS_DB || 'operations',
     longOpsCollection: process.env.LONG_OPS_COLLECTION || 'long-queries',
@@ -38,5 +38,9 @@ try {
 }
 
 const config = _.merge(configEnv, configFile);
+
+if (!config.killFilter) {
+    config.killFilter = defaultKillFilter;
+}
 
 module.exports = config;
