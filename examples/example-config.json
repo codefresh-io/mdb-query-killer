@@ -4,14 +4,41 @@
     "killThresholdSeconds": 90,
     "checkIntervalSeconds": 15,
     "killFilter": {
-        "type": "object",
-        "properties": {
-          "op": {
-            "type": "string",
-            "enum": ["query"]
-          }
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "type": "string",
+              "enum": [
+                "query"
+              ]
+            }
+          },
+          "additionalProperties": true
         },
-        "additionalProperties": true
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "type": "string",
+              "enum": [
+                "command"
+              ]
+            },
+            "command": {
+              "type": "object",
+              "anyOf": [
+                { "required": ["explain"] },
+                { "required": ["count"] },
+                { "required": ["aggregate"] }
+              ],
+              "additionalProperties": true  
+            }
+          },
+          "additionalProperties": true
+        }
+      ]
     },
     "recordAllLongOps": true,
     "longOpsDB": "operations",
