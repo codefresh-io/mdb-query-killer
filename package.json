@@ -11,7 +11,7 @@
   "dependencies": {
     "jsonschema": "^1.2.11",
     "lodash": "^4.17.20",
-    "mongodb": "^3.6.2",
+    "mongodb": "^3.6.3",
     "request": "^2.88.2",
     "request-promise": "^4.2.6",
     "slack-webhook": "^1.0.0",
