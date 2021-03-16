@@ -5,11 +5,16 @@ const Slack = require('./Slack');
 const cfg = require('./config');
 
 async function getLongRunningOps(client, threshold) {
-    const res = await client.db().admin().command({
-        currentOp: 1,
-        secs_running: { "$gt": threshold }
-    });
-    return res.inprog;
+    try {
+        const res = await client.db().admin().command({
+            currentOp: 1,
+            secs_running: { "$gt": threshold }
+        });
+        return res.inprog;
+    } catch (e) {
+        console.log(`Failed to get long running ops:\n${e}`);
+        throw e;
+    }
 }
 
 // reports long running ops that are finished
@@ -69,20 +74,20 @@ async function mainLoop(cfg, client, slack) {
                 console.log(`Detected a long running operation with ID: ${op.opid}`);
                 if (cfg.recordAllLongOps) {
                     let res = recordOp(client, op, cfg.longOpsDB, cfg.longOpsCollection)
-                        .catch(()=>{});
+                        .catch(() => { });
                     promises.push(res);
                 }
                 if (cfg.killingEnabled) {
                     if (op.secs_running > cfg.killThresholdSeconds) {
                         if (matchesFilter(op, cfg.killFilter)) {
-                        let res = killOp(client, op)
-                            .then(() => {
-                                console.log("Sending notification about the killed operation to Slack...");
-                                return slack.alert('Killed a long running operation', op);
-                            })
-                            .catch((e) => {
-                                return slack.alert(`Failed killing an operation, error: ${e}`, op);
-                            });
+                            let res = killOp(client, op)
+                                .then(() => {
+                                    console.log("Sending notification about the killed operation to Slack...");
+                                    return slack.alert('Killed a long running operation', op);
+                                })
+                                .catch((e) => {
+                                    return slack.alert(`Failed killing an operation, error: ${e}`, op);
+                                });
                             _.remove(ops, (o) => { return o.opid == op.opid });
                             return promises.push(res);
                         }
@@ -132,7 +137,10 @@ async function main() {
     await client.connect();
     console.log("Successfully connected, starting the main loop...");
 
-    const loopFinished = mainLoop(cfg, client, slack);
+    const loopFinished = mainLoop(cfg, client, slack).catch(() => {
+        // exit with non-zero code to force K8s to restart the service and re-initialize the mongo client
+        process.exit(1);
+    });
 
     process.on('SIGTERM', async () => {
         await handleSigTerm(client, loopFinished)
