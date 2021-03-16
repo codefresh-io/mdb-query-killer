@@ -5,11 +5,16 @@ const Slack = require('./Slack');
 const cfg = require('./config');
 
 async function getLongRunningOps(client, threshold) {
+    try {
     const res = await client.db().admin().command({
         currentOp: 1,
         secs_running: { "$gt": threshold }
     });
     return res.inprog;
+    } catch (e) {
+        console.log(`Failed to get long running ops:\n${e}`);
+        throw e;
+}
 }
 
 // reports long running ops that are finished
@@ -132,7 +137,10 @@ async function main() {
     await client.connect();
     console.log("Successfully connected, starting the main loop...");
 
-    const loopFinished = mainLoop(cfg, client, slack);
+    const loopFinished = mainLoop(cfg, client, slack).catch(() => {
+        // exit with non-zero code to force K8s to restart the service and re-initialize the mongo client
+        process.exit(1);
+    });
 
     process.on('SIGTERM', async () => {
         await handleSigTerm(client, loopFinished)
