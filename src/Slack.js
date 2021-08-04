@@ -14,7 +14,7 @@ class Slack {
             text = header;
         }
 
-        return this.slack.send({ text: text, channel: `#${channel}` })
+        return this.slack.send({ text: text, channel: channel })
             .then(() => {
                 console.log("Slack notification has been successfully sent");
             })
@@ -26,7 +26,7 @@ class Slack {
     alert(header, body) {
         this.send(header, body, this.channels.alerts);
     }
-    
+
     warn(header, body) {
         this.send(header, body, this.channels.warnings);
     }
