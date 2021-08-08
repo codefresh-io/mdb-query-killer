@@ -1,8 +1,8 @@
-const SlackWebhook = require('slack-webhook');
+const { IncomingWebhook } = require('@slack/webhook');
 
 class Slack {
     constructor(cfg) {
-        this.slack = new SlackWebhook(cfg.webhookUrl);
+        this.slack = new IncomingWebhook(cfg.webhookUrl);
         this.channels = cfg.channels;
     }
 
@@ -14,7 +14,10 @@ class Slack {
             text = header;
         }
 
-        return this.slack.send({ text: text, channel: channel })
+        return (async () => {
+            console.log(`send to slack: ${text}`);
+            await this.slack.send({ text: text, channel: channel });
+        })()
             .then(() => {
                 console.log("Slack notification has been successfully sent");
             })

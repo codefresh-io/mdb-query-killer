@@ -1,6 +1,6 @@
 const { MongoClient } = require('mongodb');
 const zlib = require('zlib');
-const SlackWebhook = require('slack-webhook');
+const { IncomingWebhook } = require('@slack/webhook');
 const cfg = require('./config');
 const request = require('request-promise');
 const _ = require('lodash');
@@ -61,10 +61,14 @@ function searchLog(log, matchedString) {
 function alertCollscanOps(opLog, slackHookURL) {
     console.log("Sending found COLLSCAN ops to a Slack channel...");
 
-    const slack = new SlackWebhook(slackHookURL);
+    const slack = new IncomingWebhook(slackHookURL);
+
     let messagesLanded = _.map(opLog, (op) => {
         let text = `*Detected COLLSCAN operation:*\n\`\`\`${op}\`\`\``;
-        return slack.send({ text: text });
+        return (async () => {
+            console.log(`send to slack: ${text}`);
+            await slack.send({text: text});
+        })();
     });
 
     Promise.all(messagesLanded)
