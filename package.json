@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@slack/webhook": "^6.0.0",
+    "@slack/webhook": "^6.1.0",
     "jsonschema": "^1.2.11",
     "lodash": "^4.17.21",
     "mongodb": "^3.6.2",
