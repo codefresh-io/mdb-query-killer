@@ -86,10 +86,10 @@ async function mainLoop(cfg, client, slack) {
                                 let res = killOp(client, op)
                                     .then(() => {
                                         console.log("Sending notification about the killed operation to Slack...");
-                                        // return slack.alert('Killed a long running operation', op);
+                                        return slack.alert('Killed a long running operation', op);
                                     })
                                     .catch((e) => {
-                                        // return slack.alert(`Failed killing an operation, error: ${e}`, op);
+                                        return slack.alert(`Failed killing an operation, error: ${e}`, op);
                                     });
                                 _.remove(ops, (o) => { return o.opid == op.opid });
                                 return promises.push(res);
