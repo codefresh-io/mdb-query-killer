@@ -1,10 +1,11 @@
 affinity: {}
 
-image:
-  registry: gcr.io/codefresh-inc
-  name: codefresh/mdb-query-killer
+container:
+  image:
+    registry: gcr.io/codefresh-inc
+    name: codefresh/mdb-query-killer
 
-# dockerConfigB64: 
+# dockerConfigB64:
 
 config: |
   {
@@ -42,7 +43,7 @@ config: |
                 { "required": ["count"] },
                 { "required": ["aggregate"] }
               ],
-              "additionalProperties": true  
+              "additionalProperties": true
             }
           },
           "additionalProperties": true

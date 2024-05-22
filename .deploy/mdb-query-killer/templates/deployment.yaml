@@ -19,7 +19,7 @@ spec:
     matchLabels:
       app: {{ $.Chart.Name }}
   template:
-    metadata:      
+    metadata:
       labels:
         app: {{ $.Chart.Name }}
         chart: {{ $.Chart.Name }}
@@ -35,11 +35,9 @@ spec:
         runAsUser: 1000
       affinity:
 {{ toYaml $.Values.affinity | indent 8 }}
-      imagePullSecrets:
-        - name: "{{ .Chart.Name }}-registry"
       containers:
       - name: {{ .Chart.Name }}
-        image: "{{ $.Values.image.registry }}/{{ $.Values.image.name }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
+        image: "{{ $.Values.container.image.registry }}/{{ $.Values.container.image.name }}:{{ $.Values.container.image.tag | default $.Chart.AppVersion }}"
         imagePullPolicy: Always
         args: ["/etc/mdb-query-killer/config.json"]
         volumeMounts:
