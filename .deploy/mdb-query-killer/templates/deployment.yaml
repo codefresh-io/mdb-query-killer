@@ -19,7 +19,7 @@ spec:
     matchLabels:
       app: {{ $.Chart.Name }}
   template:
-    metadata:      
+    metadata:
       labels:
         app: {{ $.Chart.Name }}
         chart: {{ $.Chart.Name }}
@@ -35,8 +35,6 @@ spec:
         runAsUser: 1000
       affinity:
 {{ toYaml $.Values.affinity | indent 8 }}
-      imagePullSecrets:
-        - name: "{{ .Chart.Name }}-registry"
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ $.Values.image.registry }}/{{ $.Values.image.name }}:{{ $.Values.image.tag | default $.Chart.AppVersion }}"
