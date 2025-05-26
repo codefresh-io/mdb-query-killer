@@ -6,7 +6,7 @@ The killer is also configurable with a specific **kill filter**. If a candidate 
 
 Before killing an operation, the killer records it to a separate database and collection, which can be specified as configuration values.
 
-The service is implemented as a K8s pod controlled by a deployment. The respective [Helm chart](https://github.com/codefresh-io/mdb-query-killer/tree/master/chart) is present in this repository.
+The service is implemented as a K8s pod controlled by a deployment. The respective [Helm chart](https://github.com/codefresh-io/mdb-query-killer/tree/master/.deploy) is present in this repository.
 
 ## Configuration
 
