@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion: v2
 description: Terminates long running mongo operations
 name: mdb-query-killer
 version: 1.1.2
