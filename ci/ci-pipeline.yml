@@ -70,9 +70,9 @@ steps:
         commands:
           - |-
             source /get-token/get-gh-token.sh
-            if [[ "$(git describe --tags --abbrev=0)" == "${{APP_VERSION}}" ]]; then 
+            if [[ "$(git describe --tags --abbrev=0)" == "${{APP_VERSION}}" ]]; then
               echo "Git tag is already created, skipping..."
-              exit 0 
+              exit 0
             fi
             curl --fail -X POST -d "{\"ref\": \"refs/tags/${APP_VERSION}\", \"sha\": \"${CF_REVISION}\"}" -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${CF_REPO_OWNER}/${CF_REPO_NAME}/git/refs
 
@@ -82,7 +82,7 @@ steps:
         type: push
         registry: "${{REGISTRY_INTEGRATION}}"
         candidate: ${{build_image}}
-        tags: 
+        tags:
           - "${{APP_VERSION}}"
           - "latest"
 
@@ -92,16 +92,6 @@ steps:
         type: push
         registry: "${{REGISTRY_INTEGRATION}}"
         candidate: ${{build_addon_image}}
-        tags: 
+        tags:
           - "${{APP_VERSION}}"
           - "latest"
-
-  deploy:
-    title: "Running the deploy pipeline..."
-    stage: deploy
-    image: codefresh/cli
-    when:
-      branch:
-        only: [master]
-    commands:
-      - codefresh run ${{DEPLOY_PIPELINE_NAME}} --trigger production --branch master
