@@ -36,56 +36,6 @@ An example of such configuration file is [here](https://github.com/codefresh-io/
 | slack.channels.alerts | Slack channel to send alerts about the killed operations | string | - |
 | slack.channels.warnings | Slack channel to send various warnings | string | - |
 
-## Installation
-
-The application can be installed on a K8s cluster in 2 ways:
-1. Manually
-2. Via a Codefresh pipeline
-
-### Manual Installation/Upgrade
-
-Warning: in case if you need to install it onto the production cluster, do not use this type of installation.
-
-1. Clone the repo and cd into the directory:
-```
-git clone https://github.com/codefresh-io/mdb-query-killer.git
-cd mdb-query-killer
-```
-2. Optionally, change the default values in the `chart/values.yaml` and issue the command:
-```
-helm upgrade --install --namespace default --atomic mdb-query-killer chart/
-```
-
-### Installation/Upgrade via a Codefresh pipeline
-
-There is a [deployment pipeline](https://g.codefresh.io/pipelines/edit/workflow?id=5f883eb9e76a53333c2f5b8a&pipeline=cd-mdb-query-killer&projects=mongo-query-killer&projectId=5f882f99e76a5355a52f5add) in the `codefresh-inc` account, which is triggered automatically on pushes to the `master` branch of this repository and deploys the killer onto our production cluster.
-
-The pipeline has 2 triggers - one for `production` and another for `staging` clusters, which have different set of variables attached to each:
-|Variable name|Description|
-|---|---|
-|TARGET_CLUSTER|The name of the cluster seen on the Integrations page of the account|
-|NAMESPACE|K8s Namespace, where the application will be installed to |
-|VALUES_SHRD_CTX_NAME| The name of a [Shared Configuration](https://codefresh.io/docs/docs/configure-ci-cd-pipeline/shared-configuration/) of type "YAML", which is present in the account. It defines a set of passed Helm values|
-
-You can also run the deployment pipeline *manually* selecting a trigger and your branch.
-
-If you need to update some configuration values of the killer without pushing any code changes, do the following:
-1. Find the corresponding Shared Configuration in the `codefresh-inc` account, change it in-place using Codefresh UI and save it.
-2. Run the deployment pipeline, selecting one of the triggers and specifiying the master branch. For the staging cluster you can select a different branch.
-
-## CI/CD Flow
-
-There is a CI [pipeline](https://g.codefresh.io/pipelines/edit/workflow?id=5f88360b3e8ff4784adae34f&pipeline=ci-mdb-query-killer&projects=mongo-query-killer&projectId=5f882f99e76a5355a52f5add) in `codefresh-inc` account, triggered on pushes to this repository, which does the following:
-- for the development branches:
-1. Verifies if the package.json version and `Chart.appVersion` are raised comparing it with the last version of the master branch
-2. Builds and pushes a docker image with the branch tag
-- for the master branch:
-1. Builds and pushes a docker image with a semversioned tag
-2. Creates a git tag according to the semantic version
-3. Runs the [deployment pipeline](https://g.codefresh.io/pipelines/edit/workflow?id=5f883eb9e76a53333c2f5b8a&pipeline=cd-mdb-query-killer&projects=mongo-query-killer&projectId=5f882f99e76a5355a52f5add)
-
-Details about the deployment pipeline you can find above in the "Installation" section of this document.
-
 ## Add-ons
 
 All add-ons are managed in this folder [src/addons](https://github.com/codefresh-io/mdb-query-killer/tree/master/src/addons).
