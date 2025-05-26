@@ -1,3 +1,4 @@
+{{- $libTemplateName := printf "cf-common-%s" (index .Subcharts "cf-common").Chart.Version }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,13 +29,12 @@ spec:
         heritage: {{ $.Release.Service  | quote }}
         revision: {{ $.Release.Revision | quote }}
     spec:
+      {{- include (printf "%s.image.pullSecrets" $libTemplateName ) . | nindent 6 }}
       securityContext:
         runAsNonRoot: true
         runAsGroup: 0
         fsGroup: 0
         runAsUser: 1000
-      affinity:
-{{ toYaml $.Values.affinity | indent 8 }}
       containers:
       - name: {{ .Chart.Name }}
         image: "{{ $.Values.container.image.registry }}/{{ $.Values.container.image.name }}:{{ $.Values.container.image.tag | default $.Chart.AppVersion }}"
@@ -44,6 +44,8 @@ spec:
           - name: config
             mountPath: /etc/mdb-query-killer/config.json
             subPath: config.json
+        resources:
+          {{- toYaml $.Values.resources | nindent 10 }}
       {{- if $.Values.addons.collscanOps.enabled }}
       - name: collscan-ops
         image: "{{ $.Values.addons.collscanOps.image.registry }}/{{ $.Values.addons.collscanOps.image.name }}:{{ $.Values.addons.collscanOps.image.tag | default $.Chart.AppVersion }}"
@@ -53,13 +55,27 @@ spec:
           - name: addon-collscan-ops-config
             mountPath: /etc/collscan-ops/config.json
             subPath: collscan-ops-config.json
+        resources:
+          {{- toYaml $.Values.resources | nindent 10 }}
       {{- end }}
       volumes:
       - name: config
         secret:
-          secretName: {{ .Chart.Name }}
+          secretName: {{ $.Values.configSecretName | default .Chart.Name }}
       {{- if $.Values.addons.collscanOps.enabled }}
       - name: addon-collscan-ops-config
         secret:
           secretName: {{ .Chart.Name }}
+      {{- end }}
+      {{- with $.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $.Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8}}
+      {{- end }}
+      {{- with $.Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 6 }}
       {{- end }}

@@ -1,11 +1,18 @@
-affinity: {}
+global: {}
 
 container:
   image:
-    registry: gcr.io/codefresh-inc
+    registry: us-docker.pkg.dev/codefresh-enterprise/gcr.io
     name: codefresh/mdb-query-killer
 
-# dockerConfigB64:
+imagePullSecrets:
+  - name: codefresh-registry
+
+affinity: {}
+tolerations: []
+nodeSelector: {}
+
+resources: {}
 
 config: |
   {
@@ -63,6 +70,9 @@ config: |
       }
     }
   }
+
+# Reference to a secret containing the config.json
+configSecretName: ""
 
 addons:
   collscanOps:

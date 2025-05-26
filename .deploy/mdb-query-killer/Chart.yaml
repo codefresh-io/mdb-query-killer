@@ -15,3 +15,7 @@ maintainers:
   email: a.cheshko@codefresh.io
 - name: Ilya Gorban
   email: ilya.gorban@codefresh.io
+dependencies:
+  - name: cf-common
+    repository: oci://quay.io/codefresh/charts
+    version: 0.26.0
