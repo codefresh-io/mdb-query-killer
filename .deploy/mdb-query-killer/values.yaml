@@ -5,8 +5,7 @@ container:
     registry: us-docker.pkg.dev/codefresh-enterprise/gcr.io
     name: codefresh/mdb-query-killer
 
-imagePullSecrets:
-  - name: codefresh-registry
+imagePullSecrets: []
 
 affinity: {}
 tolerations: []
